@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Süper Kasiyer - Afişli Etkileşim</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Fredoka', sans-serif; background-color: #f0fdf4; touch-action: manipulation; }
+    .product-card { transition: all 0.1s; }
+    .product-card:active { transform: scale(0.95); }
+    .money-btn { transition: transform 0.1s, box-shadow 0.1s; }
+    .money-btn:active { transform: translateY(4px); box-shadow: none; }
+    
+    /* Fiş kağıdı efekti */
+    .receipt {
+      background: white;
+      position: relative;
+      border-radius: 4px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    .receipt::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 0;
+      right: 0;
+      height: 10px;
+      background-image: radial-gradient(circle at 10px 0, transparent 10px, white 11px);
+      background-size: 20px 10px;
+      background-repeat: repeat-x;
+    }
+    
+    .unlock-anim { animation: pulse 0.5s ease-in-out; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+    
+    .locked-section { opacity: 0.5; pointer-events: none; filter: grayscale(40%); transition: all 0.3s; }
+    .unlocked-section { opacity: 1; pointer-events: auto; filter: grayscale(0%); transition: all 0.3s; }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 p-4 sm:p-6">
+
+  <!-- Üst Bilgi Paneli -->
+  <header class="max-w-7xl mx-auto bg-emerald-600 text-white rounded-3xl p-5 mb-6 shadow-lg flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-yellow-300">🛒 Süper Kasiyer</h1>
+      <p class="text-emerald-100 text-sm mt-1">Afişlerden 2 ürün seç, toplamı hesapla, para üstünü ver!</p>
+    </div>
+    <div class="flex items-center gap-6 text-center bg-emerald-700 px-6 py-2 rounded-2xl border border-emerald-500">
+      <div>
+        <div class="text-xs text-emerald-200 uppercase tracking-widest font-bold">Müşteri</div>
+        <div id="customer-count" class="text-2xl font-bold">1</div>
+      </div>
+      <div class="w-px h-8 bg-emerald-400"></div>
+      <div>
+        <div class="text-xs text-emerald-200 uppercase tracking-widest font-bold">Puan</div>
+        <div id="score-display" class="text-2xl font-bold text-yellow-300">0</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- SOL PANEL: ÜRÜN AFİŞLERİ -->
+    <div class="lg:col-span-5 bg-white rounded-3xl p-6 shadow-sm border-2 border-emerald-100 flex flex-col" id="poster-area">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-bold text-slate-700">1. Reyon Afişleri</h2>
+        <span id="cart-counter" class="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">0/2 Seçildi</span>
+      </div>
+      
+      <p class="text-xs text-slate-400 mb-4 font-semibold italic">Müşterinin sepetine eklemek için afişlere tıkla (En fazla 2 ürün):</p>
+      
+      <div class="grid grid-cols-2 gap-3 flex-grow" id="posters-container">
+        <!-- JS ile Dinamik Afişler Gelecek -->
+      </div>
+
+      <button onclick="resetCart()" class="mt-4 w-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold py-3 rounded-xl text-sm transition-colors">
+        Sepeti Temizle ve Yeniden Seç
+      </button>
+    </div>
+
+    <!-- ORTA PANEL: SEPET & TOPLAM HESABI -->
+    <div class="lg:col-span-3 flex flex-col gap-6">
+      
+      <!-- Fiş Alanı -->
+      <div class="receipt bg-white p-5 pb-8 flex flex-col border border-slate-200 min-h-[220px]">
+        <h3 class="text-center font-bold text-slate-400 uppercase tracking-widest text-xs mb-3 border-b pb-2">MÜŞTERİ SEPETİ</h3>
+        <div id="receipt-items" class="flex-grow space-y-3 text-sm text-slate-700">
+          <div class="text-center text-slate-300 mt-6 italic">Afişlerden ürün seçiniz...</div>
+        </div>
+      </div>
+
+      <!-- Toplam Hesaplama Alanı -->
+      <div class="bg-slate-800 p-5 rounded-3xl text-white shadow-xl locked-section" id="total-calc-area">
+        <label class="block text-sm text-emerald-300 mb-2 font-bold text-center">Sepetin Toplamı Kaç TL?</label>
+        <div class="flex gap-2">
+          <input type="tel" inputmode="numeric" id="input-total" class="w-full bg-slate-900 text-white font-bold text-2xl rounded-xl p-3 border-2 border-slate-600 focus:border-emerald-400 outline-none text-center" placeholder="?">
+          <button onclick="checkTotal()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold px-4 rounded-xl transition-colors">OK</button>
+        </div>
+        <p id="feedback-total" class="text-xs mt-3 text-center hidden"></p>
+      </div>
+
+    </div>
+
+    <!-- SAĞ PANEL: MÜŞTERİ ÖDEMESİ & KASA ÇEKMECESİ -->
+    <div class="lg:col-span-4 flex flex-col gap-4">
+      
+      <!-- Müşteri Parası ve Para Üstü Hesabı -->
+      <div class="bg-white rounded-3xl p-5 shadow-sm border-2 border-slate-200 locked-section" id="payment-calc-area">
+        <div class="flex justify-between items-center bg-rose-50 border border-rose-100 p-3 rounded-xl mb-4">
+          <span class="text-slate-600 font-bold text-sm">Müşterinin Verdiği:</span>
+          <span id="display-customer-money" class="text-2xl font-black text-rose-600">? TL</span>
+        </div>
+
+        <label class="block text-sm text-slate-500 mb-2 font-bold text-center">Para üstü olarak kaç TL vermelisin?</label>
+        <div class="flex gap-2">
+          <input type="tel" inputmode="numeric" id="input-change" class="w-full bg-slate-100 text-slate-800 font-bold text-2xl rounded-xl p-3 border-2 border-slate-300 focus:border-amber-400 outline-none text-center" placeholder="?">
+          <button onclick="checkChange()" class="bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold px-4 rounded-xl transition-colors">OK</button>
+        </div>
+        <p id="feedback-change" class="text-xs mt-3 text-center hidden"></p>
+      </div>
+
+      <!-- Fiziksel Kasa Çekmecesi -->
+      <div class="bg-slate-900 rounded-3xl p-5 shadow-xl relative overflow-hidden locked-section flex-grow flex flex-col" id="drawer-area">
+        <div class="flex justify-between items-center mb-4 text-white">
+          <span class="text-xs text-slate-400 uppercase tracking-widest font-bold">Kasa Çekmecesi</span>
+          <span id="drawer-status" class="text-rose-400 font-bold text-xs bg-rose-900/30 px-2 py-1 rounded">🔒 KİLİTLİ</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 mb-4">
+          <button onclick="addCoin(100)" class="money-btn bg-green-700 text-white font-bold py-2.5 rounded-lg shadow-[0_4px_0_#14532d]">100₺</button>
+          <button onclick="addCoin(50)" class="money-btn bg-orange-600 text-white font-bold py-2.5 rounded-lg shadow-[0_4px_0_#7c2d12]">50₺</button>
+          <button onclick="addCoin(20)" class="money-btn bg-emerald-600 text-white font-bold py-2.5 rounded-lg shadow-[0_4px_0_#064e3b]">20₺</button>
+          <button onclick="addCoin(10)" class="money-btn bg-rose-600 text-white font-bold py-2.5 rounded-lg shadow-[0_4px_0_#881337]">10₺</button>
+          <button onclick="addCoin(5)" class="money-btn bg-purple-600 text-white font-bold py-2.5 rounded-lg shadow-[0_4px_0_#4c1d95]">5₺</button>
+          <button onclick="addCoin(1)" class="money-btn bg-amber-400 text-yellow-900 font-bold py-2.5 rounded-full shadow-[0_4px_0_#b45309] w-12 h-12 mx-auto flex items-center justify-center">1₺</button>
+        </div>
+
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-700 flex justify-between items-center mb-4">
+          <span class="text-slate-400 text-xs">Seçilen:</span>
+          <span id="selected-coins-display" class="text-2xl font-bold text-emerald-400">0 TL</span>
+        </div>
+
+        <div class="flex gap-2 mt-auto">
+            <button onclick="clearCoins()" class="w-1/3 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition text-sm">Temizle</button>
+            <button onclick="givePhysicalChange()" class="w-2/3 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black py-3 rounded-xl transition shadow-[0_4px_0_#059669] active:shadow-none active:translate-y-1">Teslim Et</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Başarı Modalı -->
+  <div id="modal" class="fixed inset-0 bg-slate-900/80 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center border-4 border-emerald-500 transform transition-all scale-95" id="modal-content">
+      <div class="text-7xl mb-4">🎉</div>
+      <h3 class="text-3xl font-bold text-emerald-600 mb-2">Harika!</h3>
+      <p class="text-slate-600 font-medium mb-6">İşlemler tamamen doğru. Müşteri çok mutlu ayrıldı.</p>
+      <button onclick="nextCustomer()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-xl text-lg shadow-lg">Sıradaki Müşteriyi Al</button>
+    </div>
+  </div>
+
+  <script>
+    // Dinamik Ürün / Afiş Veritabanı
+    const allMarketPosters = [
+      { id: 1, name: "Çikolata", emoji: "🍫", label: "Tanesi 6 TL", action: "3 adet alındı", type: "mult", calc: 6 * 3, color: "bg-amber-50" },
+      { id: 2, name: "Elma", emoji: "🍎", label: "Kilosu 15 TL", action: "2 kilo alındı", type: "mult", calc: 15 * 2, color: "bg-red-50" },
+      { id: 3, name: "Süt", emoji: "🥛", label: "4'lü Koli 48 TL", action: "İçinden 1 tane alındı", type: "div", calc: 48 / 4, color: "bg-blue-50" },
+      { id: 4, name: "Peynir", emoji: "🧀", label: "Yarım Kilo 50 TL", action: "Yarım kilo alındı", type: "add", calc: 50, color: "bg-yellow-50" },
+      { id: 5, name: "Ekmek", emoji: "🥖", label: "Taze Ekmek 10 TL", action: "1 adet alındı", type: "add", calc: 10, color: "bg-orange-50" },
+      { id: 6, name: "Yumurta", emoji: "🥚", label: "6'lı Paket 42 TL", action: "Sadece 1 adet alındı", type: "div", calc: 42 / 6, color: "bg-slate-100" },
+      { id: 7, name: "Meyve Suyu", emoji: "🧃", label: "Tanesi 8 TL", action: "4 adet alındı", type: "mult", calc: 8 * 4, color: "bg-emerald-50" },
+      { id: 8, name: "Gofret", emoji: "🧇", label: "5'li Paket 45 TL", action: "İçinden 1 tane alındı", type: "div", calc: 45 / 5, color: "bg-rose-50" }
+    ];
+
+    let currentPosters = [];
+    let cart = [];
+    let currentTotal = 0;
+    let expectedChange = 0;
+    let customerGiven = 0;
+    let selectedCoins = 0;
+    let customersServed = 1;
+    let totalScore = 0;
+
+    // Oyunu ve Rafları Hazırla
+    function initShelf() {
+      // 8 üründen rastgele 4 tanesini rafa diz
+      let shuffled = [...allMarketPosters].sort(() => 0.5 - Math.random());
+      currentPosters = shuffled.slice(0, 4);
+      
+      const container = document.getElementById('posters-container');
+      container.innerHTML = "";
+      
+      currentPosters.forEach(p => {
+        container.innerHTML += `
+          <div id="poster-${p.id}" onclick="addToCart(${p.id})" class="product-card cursor-pointer border-2 border-slate-200 rounded-xl p-3 flex flex-col ${p.color} hover:border-emerald-400 relative overflow-hidden">
+            <div class="flex items-center gap-2 mb-2 border-b border-black/10 pb-2">
+              <span class="text-2xl">${p.emoji}</span>
+              <span class="font-bold text-slate-800 text-sm leading-tight">${p.name}<br><span class="text-xs text-rose-600">${p.label}</span></span>
+            </div>
+            <div class="bg-white/80 p-1.5 rounded text-center">
+              <span class="text-[11px] font-bold text-slate-600">${p.action}</span>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function addToCart(id) {
+      if (cart.length >= 2) return; // Sadece 2 ürün seçilebilir
+      
+      const product = currentPosters.find(p => p.id === id);
+      cart.push(product);
+      currentTotal += product.calc;
+      
+      // Afişi inaktif yap (bir daha seçilmesin)
+      const posterDiv = document.getElementById(`poster-${id}`);
+      posterDiv.classList.add('opacity-40', 'pointer-events-none');
+      posterDiv.innerHTML += `<div class="absolute inset-0 bg-emerald-500/20 flex items-center justify-center"><span class="bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded">Sepette</span></div>`;
+
+      document.getElementById('cart-counter').innerText = `${cart.length}/2 Seçildi`;
+      updateReceipt();
+
+      // Sepet dolduysa 1. Adımı aktifleştir
+      if (cart.length === 2) {
+        document.getElementById('poster-area').classList.add('locked-section');
+        document.getElementById('total-calc-area').classList.remove('locked-section');
+        document.getElementById('total-calc-area').classList.add('unlock-anim');
+        document.getElementById('input-total').focus();
+      }
+    }
+
+    function resetCart() {
+      cart = [];
+      currentTotal = 0;
+      document.getElementById('cart-counter').innerText = "0/2 Seçildi";
+      document.getElementById('poster-area').classList.remove('locked-section');
+      document.getElementById('total-calc-area').classList.add('locked-section');
+      document.getElementById('input-total').value = "";
+      document.getElementById('feedback-total').classList.add('hidden');
+      initShelf();
+      updateReceipt();
+    }
+
+    function updateReceipt() {
+      const container = document.getElementById('receipt-items');
+      if (cart.length === 0) {
+        container.innerHTML = '<div class="text-center text-slate-300 mt-6 italic">Afişlerden ürün seçiniz...</div>';
+      } else {
+        container.innerHTML = cart.map(item => `
+          <div class="flex items-start gap-2 bg-slate-50 p-2 rounded border border-slate-100">
+            <span class="text-xl">${item.emoji}</span>
+            <div class="leading-tight">
+              <div class="font-bold text-slate-700 text-sm">${item.name}</div>
+              <div class="text-[11px] text-slate-500">${item.label} ➔ ${item.action}</div>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // ADIM 1 KONTROL (Toplam)
+    function checkTotal() {
+      const val = parseInt(document.getElementById('input-total').value);
+      const feedback = document.getElementById('feedback-total');
+      feedback.classList.remove('hidden');
+
+      if (isNaN(val)) {
+        feedback.className = "text-xs mt-3 text-rose-400 font-bold block";
+        feedback.innerText = "❌ Sayı giriniz.";
+        return;
+      }
+
+      if (val === currentTotal) {
+        feedback.className = "text-xs mt-3 text-emerald-400 font-bold block";
+        feedback.innerText = "✅ Sepet tutarı doğru! Müşteri ödemesini yapıyor...";
+        document.getElementById('input-total').disabled = true;
+
+        // Müşteri parasını belirle
+        const possiblePayments = [50, 100, 200];
+        for(let p of possiblePayments) {
+          if(p > currentTotal) { customerGiven = p; break; }
+        }
+        if(customerGiven <= currentTotal) customerGiven = Math.ceil(currentTotal / 10) * 10 + 20; 
+        expectedChange = customerGiven - currentTotal;
+
+        // 2. Adımı Aç
+        setTimeout(() => {
+          document.getElementById('payment-calc-area').classList.remove('locked-section');
+          document.getElementById('payment-calc-area').classList.add('unlock-anim');
+          document.getElementById('display-customer-money').innerText = customerGiven + " TL";
+          document.getElementById('input-change').focus();
+        }, 800);
+        
+      } else {
+        feedback.className = "text-xs mt-3 text-rose-400 font-bold block";
+        feedback.innerText = "❌ Yanlış. Çarpma ve bölmeleri tekrar düşün.";
+      }
+    }
+
+    // ADIM 2 KONTROL (Para Üstü)
+    function checkChange() {
+      const val = parseInt(document.getElementById('input-change').value);
+      const feedback = document.getElementById('feedback-change');
+      feedback.classList.remove('hidden');
+
+      if (isNaN(val)) {
+        feedback.className = "text-xs mt-3 text-rose-400 font-bold block";
+        feedback.innerText = "❌ Sayı giriniz.";
+        return;
+      }
+
+      if (val === expectedChange) {
+        feedback.className = "text-xs mt-3 text-emerald-500 font-bold block";
+        feedback.innerText = "✅ Çıkarma doğru! Kasa açılıyor...";
+        document.getElementById('input-change').disabled = true;
+
+        // 3. Adımı Aç (Kasa)
+        setTimeout(() => {
+          document.getElementById('drawer-area').classList.remove('locked-section');
+          document.getElementById('drawer-area').classList.add('unlock-anim', 'border-2', 'border-emerald-500');
+          const status = document.getElementById('drawer-status');
+          status.innerText = "🔓 AÇIK";
+          status.className = "text-emerald-400 font-bold text-xs bg-emerald-900/30 px-2 py-1 rounded";
+        }, 600);
+      } else {
+        feedback.className = "text-xs mt-3 text-rose-400 font-bold block";
+        feedback.innerText = `❌ Hatalı. ${customerGiven} - ${currentTotal} işlemi kaç yapar?`;
+      }
+    }
+
+    // Kasa Fonksiyonları
+    function addCoin(amount) {
+      selectedCoins += amount;
+      document.getElementById('selected-coins-display').innerText = selectedCoins + " TL";
+    }
+
+    function clearCoins() {
+      selectedCoins = 0;
+      document.getElementById('selected-coins-display').innerText = selectedCoins + " TL";
+    }
+
+    function givePhysicalChange() {
+      if (selectedCoins === expectedChange) {
+        totalScore += 20;
+        document.getElementById('score-display').innerText = totalScore;
+        const modal = document.getElementById('modal');
+        modal.classList.remove('hidden');
+        setTimeout(() => { document.getElementById('modal-content').classList.remove('scale-95'); document.getElementById('modal-content').classList.add('scale-100'); }, 10);
+      } else {
+        alert(selectedCoins > expectedChange ? "Fazla para verdin! Tekrar say." : "Eksik para verdin!");
+      }
+    }
+
+    function nextCustomer() {
+      document.getElementById('modal').classList.add('hidden');
+      customersServed++;
+      document.getElementById('customer-count').innerText = customersServed;
+      
+      // Arayüzleri Sıfırla ve Kilitle
+      document.getElementById('payment-calc-area').classList.add('locked-section');
+      document.getElementById('display-customer-money').innerText = "? TL";
+      document.getElementById('input-change').value = "";
+      document.getElementById('input-change').disabled = false;
+      document.getElementById('feedback-change').classList.add('hidden');
+
+      document.getElementById('drawer-area').classList.add('locked-section');
+      document.getElementById('drawer-area').classList.remove('border-2', 'border-emerald-500');
+      document.getElementById('drawer-status').innerText = "🔒 KİLİTLİ";
+      document.getElementById('drawer-status').className = "text-rose-400 font-bold text-xs bg-rose-900/30 px-2 py-1 rounded";
+      
+      clearCoins();
+      resetCart();
+    }
+
+    // Enter Tuşları
+    document.getElementById('input-total').addEventListener('keypress', function (e) { if (e.key === 'Enter') checkTotal(); });
+    document.getElementById('input-change').addEventListener('keypress', function (e) { if (e.key === 'Enter') checkChange(); });
+
+    // Başlat
+    initShelf();
+  </script>
+</body>
+</html>
