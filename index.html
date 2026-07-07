@@ -1,0 +1,111 @@
+```html
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mira'nın Olasılık Deneyi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Architects+Daughter&display=swap" rel="stylesheet">
+  <style>
+    body { background-color: #f1f5f9; font-family: 'Patrick Hand', cursive; }
+    .notebook-page {
+      background-color: #ffffff;
+      background-image: linear-gradient(#d8e4f0 1px, transparent 1px), linear-gradient(90deg, #d8e4f0 1px, transparent 1px);
+      background-size: 25px 25px;
+      min-height: 800px;
+    }
+    .bubble {
+        position: relative;
+        background: #fff;
+        border: 3px solid #334155;
+        border-radius: 20px;
+        padding: 20px;
+    }
+    .bubble:after {
+        content: '';
+        position: absolute;
+        bottom: -15px; left: 30px;
+        width: 20px; height: 20px;
+        background: #fff;
+        border-right: 3px solid #334155;
+        border-bottom: 3px solid #334155;
+        transform: rotate(45deg);
+    }
+  </style>
+</head>
+<body class="p-4 sm:p-10">
+
+  <!-- Üst Panel -->
+  <div class="max-w-4xl mx-auto w-full mb-8 bg-slate-900 text-white p-6 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-5 shadow-2xl">
+    <div>
+        <h1 class="text-2xl font-bold text-amber-400">Mira'nın Olasılık Defteri</h1>
+        <p class="text-xs text-slate-400 uppercase tracking-widest">Veriye Dayalı Tahmin</p>
+    </div>
+    <div class="flex flex-wrap gap-2 justify-center">
+      <button onclick="addMove('tas')" class="bg-amber-500 text-slate-900 font-bold px-4 py-2 rounded-xl hover:bg-amber-400 transition-all">✊ TAŞ</button>
+      <button onclick="addMove('kagit')" class="bg-emerald-500 text-slate-900 font-bold px-4 py-2 rounded-xl hover:bg-emerald-400 transition-all">✋ KAĞIT</button>
+      <button onclick="addMove('makas')" class="bg-rose-500 text-white font-bold px-4 py-2 rounded-xl hover:bg-rose-400 transition-all">✂️ MAKAS</button>
+      <button onclick="simulateZeynep()" class="bg-blue-600 text-white font-bold px-4 py-2 rounded-xl hover:bg-blue-500 transition-all border border-blue-400">⚡ RASSAL OYNA</button>
+      <button onclick="resetAll()" class="bg-slate-700 text-white font-bold px-4 py-2 rounded-xl hover:bg-slate-600 transition-all">🔄 SIFIRLA</button>
+    </div>
+  </div>
+
+  <!-- Defter Sayfası -->
+  <div class="max-w-4xl mx-auto w-full notebook-page p-8 sm:p-16 rounded-3xl border border-slate-200">
+    
+    <div id="thought-bubble" class="bubble text-2xl font-bold text-slate-800 mb-12 shadow-lg">
+        "Zeynep'in hamlelerini kaydediyorum, olasılığı hesaplamaya başlayalım!"
+    </div>
+
+    <table class="w-full text-left mb-12">
+      <thead>
+        <tr class="text-blue-900 text-xl border-b-4 border-slate-900">
+          <th class="pb-4">Seçim</th>
+          <th class="pb-4 text-right pr-4">Sayı</th>
+        </tr>
+      </thead>
+      <tbody class="text-3xl font-bold text-slate-800">
+        <tr class="border-b-2 border-slate-300"><td class="py-6">✊ Taş</td><td id="count-tas" class="text-right pr-4 text-amber-700">0</td></tr>
+        <tr class="border-b-2 border-slate-300"><td class="py-6">✋ Kağıt</td><td id="count-kagit" class="text-right pr-4">0</td></tr>
+        <tr class="border-b-2 border-slate-300"><td class="py-6">✂️ Makas</td><td id="count-makas" class="text-right pr-4 text-rose-700">0</td></tr>
+      </tbody>
+    </table>
+
+    <div class="text-3xl font-bold text-blue-900">
+        Taş Olasılığı: <span id="prob-display">0 / 0 = %0</span>
+    </div>
+  </div>
+
+  <script>
+    const state = { tas: 0, kagit: 0, makas: 0, total: 0 };
+
+    function updateView() {
+      ['tas', 'kagit', 'makas'].forEach(key => {
+        document.getElementById(`count-${key}`).innerText = state[key];
+      });
+
+      const prob = state.total > 0 ? Math.round((state.tas / state.total) * 100) : 0;
+      document.getElementById('prob-display').innerText = `${state.tas} / ${state.total} = %${prob}`;
+
+      const bubble = document.getElementById('thought-bubble');
+      if (state.total < 3) bubble.innerText = "\"Zeynep'in hamlelerini kaydediyorum...\"";
+      else if (prob > 50) bubble.innerText = "\"Vay! Zeynep sürekli Taş atıyor, artık Kağıt zamanı! ✋\"";
+      else if (prob < 20) bubble.innerText = "\"Taş atma ihtimali düşük, Makas atabilir! ✂️\"";
+      else bubble.innerText = "\"Henüz belirgin bir strateji yok, takipteyim!\"";
+    }
+
+    function addMove(key) { state[key]++; state.total++; updateView(); }
+    
+    // Rassal Oynatma Simülasyonu
+    function simulateZeynep() { 
+        const r = Math.random(); 
+        addMove(r < 0.6 ? 'tas' : (r < 0.8 ? 'kagit' : 'makas')); 
+    }
+
+    function resetAll() { state.tas=0; state.kagit=0; state.makas=0; state.total=0; updateView(); }
+  </script>
+</body>
+</html>
+
+```
