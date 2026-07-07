@@ -354,6 +354,12 @@
     }
 
     function nextCustomer() {
+
+    resetGameState();
+
+    // yeni müşteri oluştur
+    generateCustomer();
+
       document.getElementById('modal').classList.add('hidden');
       customersServed++;
       document.getElementById('customer-count').innerText = customersServed;
